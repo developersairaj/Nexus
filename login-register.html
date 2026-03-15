@@ -989,7 +989,7 @@
 
                         <div class="form-options">
                             <div class="checkbox-container">
-                                <input type="checkbox" id="agreeTerms" required>
+                                <input type="checkbox" id="agreeTerms">
                                 <label for="agreeTerms">I agree to the <a href="#" class="forgot-link">Terms & Conditions</a></label>
                             </div>
                         </div>
@@ -1023,61 +1023,59 @@
         </div>
     </div>
 
+    <!-- Supabase JS SDK (new publishable key format, no separate URL needed) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
+    <!-- Supabase JS SDK v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+
     <script>
-        // Theme Toggle Functionality
+        // ── Supabase Init ──────────────────────────────────────────────────────
+        const SUPABASE_URL      = 'https://vuswctsjvzvltcklicly.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1c3djdHNqdnp2bHRja2xpY2x5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxNTk2MjksImV4cCI6MjA4ODczNTYyOX0.6PEJ_mNsLi49u8n4tqeNP_Uos2ZU5yj1_8BZUQKKqac';
+
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // ── Theme ──────────────────────────────────────────────────────────────
         function toggleTheme() {
             const checkbox = document.getElementById('theme-checkbox');
-            const body = document.body;
-            
             if (checkbox.checked) {
-                body.setAttribute('data-theme', 'dark');
+                document.body.setAttribute('data-theme', 'dark');
                 localStorage.setItem('theme', 'dark');
             } else {
-                body.removeAttribute('data-theme');
+                document.body.removeAttribute('data-theme');
                 localStorage.setItem('theme', 'light');
             }
         }
 
-        // Load saved theme
         function loadTheme() {
-            const savedTheme = localStorage.getItem('theme');
-            const checkbox = document.getElementById('theme-checkbox');
-            
-            if (savedTheme === 'dark') {
+            const saved = localStorage.getItem('theme');
+            if (saved === 'dark') {
                 document.body.setAttribute('data-theme', 'dark');
-                checkbox.checked = true;
+                document.getElementById('theme-checkbox').checked = true;
             }
         }
 
-        // Tab Switching
+        // ── Tab Switching ──────────────────────────────────────────────────────
         function switchTab(tab) {
-            const loginForm = document.getElementById('loginForm');
-            const registerForm = document.getElementById('registerForm');
-            const tabButtons = document.querySelectorAll('.tab-button');
-            
-            // Remove active class from all tabs and forms
-            tabButtons.forEach(btn => btn.classList.remove('active'));
-            loginForm.classList.remove('active');
-            registerForm.classList.remove('active');
-            
-            // Add active class to selected tab
-            if (tab === 'login') {
-                tabButtons[0].classList.add('active');
-                loginForm.classList.add('active');
-            } else {
-                tabButtons[1].classList.add('active');
-                registerForm.classList.add('active');
-            }
-            
-            // Clear any messages
+            document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+            document.getElementById('loginForm').classList.remove('active');
+            document.getElementById('registerForm').classList.remove('active');
             hideMessage();
+
+            if (tab === 'login') {
+                document.querySelectorAll('.tab-button')[0].classList.add('active');
+                document.getElementById('loginForm').classList.add('active');
+            } else {
+                document.querySelectorAll('.tab-button')[1].classList.add('active');
+                document.getElementById('registerForm').classList.add('active');
+            }
         }
 
-        // Password Toggle
+        // ── Password Toggle ────────────────────────────────────────────────────
         function togglePassword(inputId) {
             const input = document.getElementById(inputId);
-            const icon = input.parentNode.querySelector('.password-toggle i');
-            
+            const icon  = input.parentNode.querySelector('.password-toggle i');
             if (input.type === 'password') {
                 input.type = 'text';
                 icon.classList.replace('fa-eye', 'fa-eye-slash');
@@ -1087,193 +1085,206 @@
             }
         }
 
-        // Message Functions
-        function showMessage(message, type = 'success') {
-            const messageEl = document.getElementById('message');
-            messageEl.textContent = message;
-            messageEl.className = `message ${type} show`;
-            
-            setTimeout(() => {
-                hideMessage();
-            }, 5000);
+        // ── Messages ───────────────────────────────────────────────────────────
+        function showMessage(text, type = 'success') {
+            const el = document.getElementById('message');
+            el.textContent = text;
+            el.className = `message ${type} show`;
+            clearTimeout(window._msgTimer);
+            window._msgTimer = setTimeout(hideMessage, 6000);
         }
 
         function hideMessage() {
-            const messageEl = document.getElementById('message');
-            messageEl.classList.remove('show');
+            document.getElementById('message').classList.remove('show');
         }
 
-        // Form Validation
+        // ── Validation ─────────────────────────────────────────────────────────
         function validateEmail(email) {
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return emailRegex.test(email);
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
         }
 
-        function validatePassword(password) {
-            // At least 8 characters, one uppercase, one lowercase, one number
-            const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d@$!%*?&]{8,}$/;
-            return passwordRegex.test(password);
-        }
-
-        // Login Handler
-        function handleLogin(event) {
+        // ── LOGIN ──────────────────────────────────────────────────────────────
+        async function handleLogin(event) {
             event.preventDefault();
-            
-            const email = document.getElementById('loginEmail').value;
+
+            const email    = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
-            
-            // Basic validation
+
             if (!validateEmail(email)) {
-                showMessage('Please enter a valid email address', 'error');
-                return;
+                showMessage('Please enter a valid email address.', 'error'); return;
             }
-            
             if (password.length < 6) {
-                showMessage('Password must be at least 6 characters long', 'error');
-                return;
+                showMessage('Password must be at least 6 characters.', 'error'); return;
             }
-            
-            // Simulate login process
-            const submitBtn = event.target.querySelector('.btn-primary');
-            const originalText = submitBtn.innerHTML;
-            
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
-            submitBtn.disabled = true;
-            
-            setTimeout(() => {
-                // Check if this is a "demo" account
-                if (email === 'demo@focuszone.com' && password === 'demo123') {
-                    showMessage('Welcome back! Redirecting to dashboard...', 'success');
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 2000);
+
+            const btn = event.target.querySelector('.btn-primary');
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing In...';
+            btn.disabled  = true;
+
+            try {
+                const { data, error } = await db.auth.signInWithPassword({ email, password });
+
+                if (error) {
+                    showMessage(error.message, 'error');
                 } else {
-                    // For demo purposes, accept any valid email/password combination
-                    showMessage('Login successful! Redirecting...', 'success');
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 2000);
+                    localStorage.setItem('focuszone_user', JSON.stringify({
+                        id:    data.user.id,
+                        email: data.user.email,
+                        name:  data.user.user_metadata?.full_name || ''
+                    }));
+                    showMessage('✅ Welcome back! Redirecting...', 'success');
+                    setTimeout(() => { window.location.href = 'index.html'; }, 1500);
                 }
-                
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            }, 2000);
+            } catch (err) {
+                showMessage('Connection error: ' + err.message, 'error');
+            } finally {
+                btn.innerHTML = orig;
+                btn.disabled  = false;
+            }
         }
 
-        // Register Handler
-        function handleRegister(event) {
+        // ── REGISTER ───────────────────────────────────────────────────────────
+        async function handleRegister(event) {
             event.preventDefault();
-            
-            const name = document.getElementById('registerName').value;
-            const email = document.getElementById('registerEmail').value;
+            event.stopPropagation();
+
+            const name     = document.getElementById('registerName').value.trim();
+            const email    = document.getElementById('registerEmail').value.trim();
             const password = document.getElementById('registerPassword').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
-            const agreeTerms = document.getElementById('agreeTerms').checked;
-            
-            // Validation
+            const confirm  = document.getElementById('confirmPassword').value;
+            const agreed   = document.getElementById('agreeTerms').checked;
+
+            // ── Validate ──
             if (name.length < 2) {
-                showMessage('Name must be at least 2 characters long', 'error');
-                return;
+                showMessage('Name must be at least 2 characters.', 'error'); return;
             }
-            
             if (!validateEmail(email)) {
-                showMessage('Please enter a valid email address', 'error');
-                return;
+                showMessage('Please enter a valid email address.', 'error'); return;
             }
-            
-            if (!validatePassword(password)) {
-                showMessage('Password must be at least 8 characters with uppercase, lowercase, and number', 'error');
-                return;
+            if (password.length < 6) {
+                showMessage('Password must be at least 6 characters.', 'error'); return;
             }
-            
-            if (password !== confirmPassword) {
-                showMessage('Passwords do not match', 'error');
-                return;
+            if (password !== confirm) {
+                showMessage('Passwords do not match.', 'error'); return;
             }
-            
-            if (!agreeTerms) {
-                showMessage('Please agree to the Terms & Conditions', 'error');
-                return;
+            if (!agreed) {
+                showMessage('Please agree to the Terms & Conditions.', 'error'); return;
             }
-            
-            // Simulate registration process
-            const submitBtn = event.target.querySelector('.btn-primary');
-            const originalText = submitBtn.innerHTML;
-            
-            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
-            submitBtn.disabled = true;
-            
-            setTimeout(() => {
-                showMessage('Account created successfully! Please check your email for verification.', 'success');
-                
-                // Switch to login form after successful registration
+
+            const btn = event.target.querySelector('.btn-primary');
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating Account...';
+            btn.disabled  = true;
+
+            try {
+                console.log('[Register] Signing up:', email);
+
+                // Step 1 — Create auth user
+                const { data, error } = await db.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: { full_name: name }
+                    }
+                });
+
+                console.log('[Register] signUp result → data:', data, '| error:', error);
+
+                if (error) {
+                    showMessage(error.message, 'error');
+                    return;
+                }
+
+                // Duplicate email check (Supabase returns empty identities for existing users)
+                if (data.user && data.user.identities && data.user.identities.length === 0) {
+                    showMessage('This email is already registered. Please sign in.', 'error');
+                    return;
+                }
+
+                if (!data.user) {
+                    showMessage('Sign up failed. Please try again.', 'error');
+                    return;
+                }
+
+                // Step 2 — Also store profile in a "profiles" table (optional, only if table exists)
+                try {
+                    const { error: profileError } = await db.from('profiles').insert([{
+                        id:         data.user.id,
+                        full_name:  name,
+                        email:      email,
+                        created_at: new Date().toISOString()
+                    }]);
+                    if (profileError) {
+                        console.warn('[Register] Profile insert skipped:', profileError.message);
+                    } else {
+                        console.log('[Register] Profile stored in DB.');
+                    }
+                } catch(pe) {
+                    console.warn('[Register] Profile table not found, skipping.', pe.message);
+                }
+
+                showMessage('✅ Account created! Check your email to verify, then sign in.', 'success');
                 setTimeout(() => {
                     switchTab('login');
                     document.getElementById('loginEmail').value = email;
-                }, 2000);
-                
-                submitBtn.innerHTML = originalText;
-                submitBtn.disabled = false;
-            }, 2000);
+                }, 3000);
+
+            } catch (err) {
+                console.error('[Register] Exception:', err);
+                showMessage('Connection error: ' + err.message, 'error');
+            } finally {
+                btn.innerHTML = orig;
+                btn.disabled  = false;
+            }
         }
 
-        // Social Login Handler
-        function handleSocialLogin(provider) {
-            showMessage(`${provider.charAt(0).toUpperCase() + provider.slice(1)} login will be available soon!`, 'error');
+        // ── Social Login ───────────────────────────────────────────────────────
+        async function handleSocialLogin(provider) {
+            try {
+                const { error } = await db.auth.signInWithOAuth({
+                    provider,
+                    options: { redirectTo: window.location.origin + '/index.html' }
+                });
+                if (error) showMessage(error.message, 'error');
+            } catch (err) {
+                showMessage('Social login error: ' + err.message, 'error');
+            }
         }
 
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            loadTheme();
-            
-            // Add some interactive feedback to inputs
-            const inputs = document.querySelectorAll('input');
-            inputs.forEach(input => {
-                input.addEventListener('focus', function() {
-                    this.parentNode.style.transform = 'scale(1.02)';
-                });
-                
-                input.addEventListener('blur', function() {
-                    this.parentNode.style.transform = 'scale(1)';
-                });
-            });
-            
-            // Add hover effects to buttons
-            const buttons = document.querySelectorAll('.btn-primary, .btn-social');
-            buttons.forEach(button => {
-                button.addEventListener('mouseenter', function() {
-                    this.style.transform = 'translateY(-2px)';
-                });
-                
-                button.addEventListener('mouseleave', function() {
-                    this.style.transform = 'translateY(0)';
-                });
-            });
-        });
-
-        // Keyboard shortcuts
-        document.addEventListener('keydown', function(event) {
-            // Enter key to submit active form
-            if (event.key === 'Enter' && event.target.tagName !== 'BUTTON') {
-                const activeForm = document.querySelector('.auth-form.active form');
-                if (activeForm) {
-                    event.preventDefault();
-                    activeForm.dispatchEvent(new Event('submit'));
+        // ── Check existing session on load ─────────────────────────────────────
+        async function checkSession() {
+            try {
+                const { data: { session } } = await db.auth.getSession();
+                if (session) {
+                    window.location.href = 'index.html';
                 }
-            }
-            
-            // Escape key to clear messages
-            if (event.key === 'Escape') {
-                hideMessage();
-            }
-        });
+            } catch(e) { /* ignore */ }
+        }
 
-        // Auto-hide messages on input
-        document.addEventListener('input', function() {
-            const messageEl = document.getElementById('message');
-            if (messageEl.classList.contains('show')) {
-                setTimeout(hideMessage, 1000);
-            }
+        // ── Init ───────────────────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', function () {
+            loadTheme();
+            checkSession();
+
+            // Input scale effect
+            document.querySelectorAll('input').forEach(input => {
+                input.addEventListener('focus', () => input.parentNode.style.transform = 'scale(1.02)');
+                input.addEventListener('blur',  () => input.parentNode.style.transform = 'scale(1)');
+            });
+
+            // Escape clears message
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape') hideMessage();
+            });
+
+            // Auto-hide message on typing
+            document.addEventListener('input', () => {
+                if (document.getElementById('message').classList.contains('show')) {
+                    clearTimeout(window._msgTimer);
+                    window._msgTimer = setTimeout(hideMessage, 1500);
+                }
+            });
         });
     </script>
 </body>
