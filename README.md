@@ -161,7 +161,7 @@ Our passionate team works together to build the future of productivity.
 | Role                                            | Team Member |
 | ----------------------------------------------- | ----------- |
 | Frontend, UI/UX Developer & Integration Manager | **Sairaj Khanvilkar**  |
-| Backend Developer                               | **Soiya Salmani**  |
+| Backend Developer                               | **Sofiya Salmani**  |
 | Backend Developer                               | **Harsh Agarwal**  |
 | Backend Developer                               | **Pranjal Parab**   |
 | Chat Bot Developer                              | **Saloni Shaikh**   |
